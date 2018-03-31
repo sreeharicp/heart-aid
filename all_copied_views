@@ -1,0 +1,229 @@
+def PatientPortalView(request):
+	# template_name = 'home.html'
+	#Model Definitions & Declarations
+	permissionModel = PermissionsRole
+	patientModel = Patient
+	userModel = User
+	tempModel = TempPatientData
+	conditions_complete = False
+	patient_model = Patient
+	#conditions_model = PatientHealthConditions
+	alert_model = Alert
+
+	approvalSwitch = 0
+
+	#Assign default permission role
+	permissionRoleForUser = 'pending'
+	#medications_for_patient = ''
+
+	#Assign a default approval rating
+	approval = 0
+
+	#Assign a default authentication boolean
+	authenticated = False
+
+	patient = -1
+
+	#total_health_condition_level = 0
+
+	#If user has already sent an alert request
+	alert_sent = 0
+
+	#Check to see if the user has logged into the system or not
+	if request.user.is_authenticated():
+
+		if patient_model.objects.filter(user=request.user.id)[:1].exists():
+			patient = patient_model.objects.filter(user=request.user.id)[:1].get()
+
+			if Alert.objects.filter(alert_patient=patient)[:1].exists():
+				alert_sent = 1
+				patient.alertSent = 1
+				patient.save()
+			else:
+				alert_sent = patient.alertSent
+'''
+		if conditions_model.objects.filter(user=patient)[:1].exists():
+			conditions_complete = True
+			patient_conditions = conditions_model.objects.filter(user=patient)[:1].get()
+
+			total_health_condition_level =  (patient_conditions.nausea_level +
+											patient_conditions.hunger_level +
+											patient_conditions.anxiety_level+
+											patient_conditions.stomach_level+
+											patient_conditions.body_ache_level+
+											patient_conditions.chest_pain_level)
+
+
+			if (total_health_condition_level >= 40 and alert_sent == 0 and not Alert.objects.filter(alert_patient=patient)[:1].exists()):
+				patient.alertSent = 1
+				alert_sent = 1
+				alert_model = Alert(alert_patient = patient, alert_description = 'SENT BY HOSPITAL SYSTEM', alert_level = total_health_condition_level)
+				alert_model.save()
+				patient.save()
+
+			if (total_health_condition_level < 40 and alert_sent == 0):
+				if Alert.objects.filter(alert_patient=patient)[:1].exists():
+					alert_model = Alert.objects.filter(alert_patient=patient)[:1].get()
+					alert_model.delete()
+
+			#If there is no alert for the user, set the status to 0
+			if not Alert.objects.filter(alert_patient=patient)[:1].exists() and patient_model.objects.filter(user__username=request.user.username)[:1].exists():
+				patient.alertSent = 0
+				patient.save()
+
+			#If there health conditions are
+			if (total_health_condition_level < 40 and alert_sent == 1):
+				if Alert.objects.filter(alert_patient=patient)[:1].exists():
+					alert_model = Alert.objects.filter(alert_patient=patient)[:1].get()
+					if alert_model.alert_description == 'SENT BY HOSPITAL SYSTEM':
+						# alert_model = alert_model.objects.filter(alert_patient=patient)[:1].get()
+						alert_model.delete()
+						patient.alertSent = 0
+						patient.save()
+
+			#If there health conditions are
+			if (total_health_condition_level > 40 and alert_sent == 1 and not Alert.objects.filter(alert_patient=patient)[:1].exists()):
+				if Alert.objects.filter(alert_patient=patient)[:1].exists():
+					patient.alertSent = 1
+					alert_sent = 1
+					alert_model = Alert(alert_patient = patient, alert_description = 'SENT BY HOSPITAL SYSTEM', alert_level = total_health_condition_level)
+					alert_model.save()
+					patient.save()
+
+'''
+
+		#Boolean to ensure valid request authentication
+		authenticated = True
+
+		#Attempt a DB query on the request object
+		if permissionModel.objects.filter(user=request.user.id)[:1].exists():
+
+			#If request object from query exists, create a variable assignment on that object
+			permissionRoleForUser = permissionModel.objects.filter(user=request.user.id)[:1].get()
+
+			#If the logged in person is a patient, grab request object, make a query and grab the approval integer
+			if patientModel.objects.filter(user=request.user.id)[:1].exists():
+
+				#Get an integer declaraction for the approval of the user
+				approvalSwitch = patientModel.objects.filter(user=request.user.id)[:1].get()
+
+			#If the person is a hospital member, then they will automatically be considered approved
+			if (permissionRoleForUser.role in STAFF_APPROVAL_ROLES):
+				approval = 1
+			else:
+				approval = approvalSwitch.approved
+
+	#Under the instance that the user is not authenticated
+	else:
+		permissionRoleForUser = ""
+
+	tempUserInformation = ""
+	if tempModel.objects.filter(user=request.user.id)[:1].exists():
+		tempUserInformation = tempModel.objects.filter(user=request.user)[:1].get()
+
+	form = TempPatientDataForm()
+
+	if request.method == "POST":
+
+		form = TempPatientDataForm(request.POST)
+		if form.is_valid():
+			instance = form.save(commit=False)
+			instance.user = request.user
+			instance.data_sent = 1
+			instance.email_address = request.user.username
+			instance.save()
+			return HttpResponseRedirect('formsuccess')
+
+'''	#Get an array for allergies
+	if not request.user.username == "admin" and approval == 1 and permissionRoleForUser.role == 'patient':
+
+		if tempUserInformation.allergies is not None:
+			allergens = tempUserInformation.allergies.split(",")
+
+		if tempUserInformation.medications is not None:
+			med_conditions = tempUserInformation.medications.split(",")
+	else:
+		allergens = ""
+		med_conditions =""
+
+	alerts_count = Alert.objects.all().count()
+'''
+	doc_name = ''
+	appts = ''
+	if (not permissionRoleForUser == 'pending' and permissionRoleForUser.role == 'doctor'):
+
+		doc_obj = Doctor.objects.filter(doctor_user=request.user).get()
+
+		doc_name = doc_obj.doctor_first_name + ' ' + doc_obj.doctor_last_name
+
+		appts = PatientAppt.objects.filter(doctor=doc_obj, resolved=0).count()
+
+		if appts == 0:
+			appts = 'No Appointments'
+
+	current_patient = ''
+
+	if (not tempUserInformation == ''):
+		if (Patient.objects.filter(fill_from_application=tempUserInformation).exists()):
+			current_patient = Patient.objects.filter(fill_from_application=tempUserInformation).get()
+
+	#Query all the people that have alert sent
+	get_all_unapproved_patients = TempPatientData.objects.filter(data_sent=1).all()
+
+	unapproved_patient_list = []
+	temp_patient_data_list = []
+
+
+	for each_patient in get_all_unapproved_patients:
+		if (not Patient.objects.filter(fill_from_application = each_patient).exists()):
+			unapproved_patient_list.append(each_patient)
+
+	unapproved_count = len(unapproved_patient_list)
+
+	if not permissionRoleForUser == "pending":
+		if permissionRoleForUser.role == 'patient':
+			patient_date_time_set = Patient.objects.filter(fill_from_application__user=request.user).get()
+			#print patient_date_time_set.date_created
+			if patient_date_time_set.date_created == '9-20-1995':
+				d = datetime.date.today()
+				user_date_add = datetime.datetime.now()
+				#print ' is now'
+				patient_date_time_set.date_created = user_date_add
+				patient_date_time_set.save()
+				#print patient_date_time_set.date_created
+				#print 'SET'
+
+	# if not permissionRoleForUser == "pending":
+	# 	if permissionRoleForUser.role == 'patient':
+    #
+	# 		#Query the medication pickups for the patient
+	# 		medications_for_patient = EMedication.objects.filter(reminder=0, patient__user=request.user).all()
+	# 		#print medications_for_patient
+    #
+	# 		if len(medications_for_patient) == 0:
+	# 			medications_for_patient = "No Medications Pending"
+
+	context = {
+
+		'form': form,
+		'permissionModel': permissionModel,
+		'user': request.user,
+		'roles': permissionRoleForUser,
+		'approval': approval,
+		'authenticated': authenticated,
+#		'conditions_complete': conditions_complete,
+		'temp_user_data': tempUserInformation,
+		#'allergens': allergens,
+	#	'med_conditions':med_conditions,
+	#	'alert_sent':alert_sent,
+		#'alerts_count':alerts_count,
+		'doc_name' : doc_name,
+	#	'appts' : appts,
+		'current_patient' : current_patient,
+		'unapproved_patient_list' : unapproved_patient_list,
+		'unapproved_count' : unapproved_count,
+		'medications_for_patient' : medications_for_patient
+
+	}
+
+	return render(request, 'portal.html', context)

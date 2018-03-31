@@ -1,0 +1,162 @@
+{% extends '_layouts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block extension %}
+
+<script type = "text/javascript">
+  $(document).ready(function(){
+  var ctx = $("#gender_data").get(0).getContext("2d");
+  var ctx2 = $("#gender_data2").get(0).getContext("2d");
+  var ctx3 = $("#gender_data3").get(0).getContext("2d");
+	var ctx4 = $("#gender_data4").get(0).getContext("2d");
+	var ctx5 = $("#case_data").get(0).getContext("2d");
+	// var ctx6 = $("#case_data2").get(0).getContext("2d");
+
+    var genders = [
+        {
+            value: {{num_males}},
+            color: "#BF3EFF",
+            highlight: "#D276FF",
+            label: "% of Males"
+        },
+        {
+            value: {{num_females}},
+            color: "#52D5F5",
+            highlight: "#9CE7F9",
+            label: "% of Females"
+        },
+        {
+            value: {{num_other}},
+            color: "#353F3E",
+            highlight: "#6D8280",
+            label: "% of Other"
+        },
+        {
+            value: {{num_PNTS}},
+            color: "#A2C93A",
+            highlight: "#BED975",
+            label: "% of Prefer Not To Say"
+        },
+
+    ];
+
+
+
+    var age_data = [
+        {
+            value: {{age_1}},
+            color: "#8B5A2B",
+            highlight: "#E1BF9F",
+            label: "% Age 0-18"
+        },
+        {
+            value: {{age_2}},
+            color: "#D43D1A",
+            highlight: "#F5785A",
+            label: "% Age 19-44"
+        },
+        {
+            value: {{age_3}},
+            color: "#6F4242",
+            highlight: "#CFAFAF",
+            label: "% Age 45-60"
+        },
+        {
+            value: {{age_4}},
+            color: "#8B8989",
+            highlight: "#DAD7D7",
+            label: "% Age 61+"
+        },
+    ];
+
+
+
+
+    // PATIENT
+    var gender = new Chart(ctx).Pie(genders);
+
+    var age = new Chart(ctx4).Pie(age_data);
+
+    // HOSPITAL
+    // var cases = new Chart(ctx5).Doughnut(case_data);
+    // var cases2 = new Chart(ctx6).Doughnut(case_data);
+
+
+// // Need to query the tuples from the database for the live patient data
+
+
+
+function printDiv() {
+
+	window.print();
+}
+
+
+    </script>
+
+
+
+{% endblock %}
+
+
+{% block content %}
+
+<br><br>
+<a class="btn btn-blue" onclick="printDiv()">Print Statistics Report</a>
+<hr>
+
+{% if user.is_authenticated and not roles.role == "patient" %}
+
+
+<div id="printableArea">
+<center><h1>Patient Statistical Report Analysis</h1></center><hr>
+<div class="row" id = 'printer'>
+
+<div id="container" style="min-width: 310px; max-width: 1200px; height: 250px; margin: 0 auto"></div>
+
+  <div class="col-md-3">
+  	<center>
+	  	<h4>Gender Breakdown</h4><hr>
+	  	<canvas id="gender_data" width="250" height="250"></canvas><br><br><Br>
+
+	  		<h5>
+	  			<ul>
+			  		<li>{{num_males}}% Male</li>
+			  		<li>{{num_females}}% Female</li>
+			  		<li>{{num_PNTS}}% Prefer Not To Say</li>
+			  		<li>{{num_other}}% Other</li>
+		  		</ul>
+		  	</h5>
+
+  	</center>
+</div>
+
+
+  <div class="col-md-3">
+
+  	<h4>Average Age Breakdown</h4><hr>
+  	<canvas id="gender_data4" width="250" height="250"></canvas><br><br><Br>
+
+  		<h5>
+  			<ul>
+		  		<li>{{age_1}}% Age 0-18</li>
+		  		<li>{{age_2}}% Age 19-44</li>
+		  		<li>{{age_3}}% Age 45-60</li>
+		  		<li>{{age_4}}% Age 61+</li>
+	  		</ul>
+	  	</h5>
+
+  	</center>
+
+  </div>
+</div>
+
+<hr>
+
+</div>
+</div>
+
+{% endif %}
+
+
+{% endblock %}

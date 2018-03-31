@@ -1,0 +1,46 @@
+{% extends '_layouts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block extension %}
+
+	<script type = "text/javascript">
+		function printDiv() {
+
+			window.print();
+		}
+	</script>
+
+{% endblock %}
+
+{% block content %}
+
+		<div class="container">
+		  <h2>Heart Aid Patient Database</h2>
+		  <table class="table">
+		    <thead>
+		      <tr>
+		        <th>First Name</th>
+		        <th>Last Name</th>
+		        <th>Email</th>
+
+		      </tr>
+		    </thead>
+		    <tbody>
+
+		    	{% for pats in temp_user_data %}
+			      <tr>
+			        <td>{{pats.fill_from_application.first_name}}</td>
+			        <td>{{pats.fill_from_application.last_name}}</td>
+			        <td>{{pats.fill_from_application.email_address}}</td>
+			      </tr>
+		      {% endfor %}
+		    </tbody>
+		  </table>
+		</div>
+
+	{% if user.is_authenticated %}
+
+	{% endif %}
+
+
+{% endblock %}
